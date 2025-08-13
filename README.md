@@ -1,98 +1,107 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# PANTOhealth X-ray IoT Data Management API
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+This project is a NestJS application designed to process, store, and analyze X-ray data received from IoT devices. It acts as the central consumer and API layer in an IoT data pipeline, using RabbitMQ for message queuing and MongoDB for data persistence.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+This repository contains the **consumer and API** part of the system. The producer application, which simulates an IoT device sending data, can be found in a separate repository.
 
-## Description
+---
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+## Features
 
-## Project setup
+- **Asynchronous Data Ingestion**: Uses a RabbitMQ consumer to reliably process incoming data without blocking.
+- **Rich Data Processing**: Not only stores basic metadata but also calculates and stores relevant analytical parameters like `averageSpeed`, `maxSpeed`, and `durationMs` for each signal.
+- **RESTful API**: Provides a comprehensive set of CRUD endpoints to manage and retrieve signal data.
+- **Advanced Filtering**: Allows for powerful data retrieval with filtering by device ID and date ranges, as well as ranges for the calculated metrics.
+- **Fully Dockerized**: The entire application stack, including the producer, consumer, database, and message queue, can be run with a single command using Docker Compose.
 
-```bash
-$ npm install
-```
+---
 
-## Compile and run the project
+## System Architecture
 
-```bash
-# development
-$ npm run start
+The complete system consists of multiple services that communicate via a containerized network:
 
-# watch mode
-$ npm run start:dev
+1.  **Producer Application (IoT Device Simulator)**
+    - A simple NestJS application that sends sample X-ray data to a RabbitMQ queue.
+    - **Repository**: [https://github.com/MahdiPourkeshavarz/xray-producer.git](https://github.com/MahdiPourkeshavarz/xray-producer.git)
 
-# production mode
-$ npm run start:prod
-```
+2.  **Consumer & API Application (This Project)**
+    - Listens to the RabbitMQ queue for incoming messages.
+    - Parses the raw data, performs calculations, and stores the structured result in a MongoDB database.
+    - Exposes a RESTful API for clients to interact with the stored data.
+    - **Repository**: [https://github.com/MahdiPourkeshavarz/xray-api.git](https://github.com/MahdiPourkeshavarz/xray-api.git)
 
-## Run tests
+3.  **MongoDB Service**: The database where all processed signal data is stored.
+4.  **RabbitMQ Service**: The message broker that decouples the producer and consumer.
 
-```bash
-# unit tests
-$ npm run test
+**Flow:** `xray-producer container` → `rabbitmq container` → `xray-api container` → `mongo container`
 
-# e2e tests
-$ npm run test:e2e
+---
 
-# test coverage
-$ npm run test:cov
-```
+## Prerequisites
 
-## Deployment
+- [Docker](https://www.docker.com/products/docker-desktop/)
+- [Docker Compose](https://docs.docker.com/compose/install/) (usually included with Docker Desktop)
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+---
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+## Getting Started (Docker Compose)
 
-```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
-```
+This is the recommended way to run the entire system. It will build and run all required services, including the database and message queue.
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+1.  **Clone both repositories** into the same parent directory:
 
-## Resources
+    ```bash
+    git clone [https://github.com/MahdiPourkeshavarz/xray-api.git](https://github.com/MahdiPourkeshavarz/xray-api.git)
+    git clone [https://github.com/MahdiPourkeshavarz/xray-producer.git](https://github.com/MahdiPourkeshavarz/xray-producer.git)
+    ```
 
-Check out a few resources that may come in handy when working with NestJS:
+2.  **Create the Docker Compose file:**
+    In the **parent directory** (the one containing both project folders), create a `docker-compose.yml` file and add the content provided in the project documentation.
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+3.  **Set up environment variables:**
+    In the root of the `xray-api` project, create a `.env` file with the following content. **Note:** The hostnames (`mongo`, `rabbitmq`) refer to the service names in the `docker-compose.yml` file.
 
-## Support
+    ```env
+    # xray-api/.env
+    MONGO_URI=mongodb://root:example@mongo:27017/
+    RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672
+    RABBITMQ_XRAY_QUEUE=x-ray_queue
+    ```
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+    In the root of the `xray-producer` project, create a `.env` file:
 
-## Stay in touch
+    ```env
+    # xray-producer/.env
+    RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672
+    RABBITMQ_XRAY_QUEUE=x-ray_queue
+    ```
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+4.  **Build and run the services:**
+    From the parent directory containing the `docker-compose.yml` file, run:
+    ```bash
+    docker-compose up --build
+    ```
+    This command will build the images for both applications and start all four containers.
 
-## License
+---
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+## Accessing the Services
+
+Once the containers are running:
+
+- **X-Ray API**: `http://localhost:3001`
+- **Producer API**: `http://localhost:3002`
+- **RabbitMQ Management UI**: `http://localhost:15672` (user: `guest`, pass: `guest`)
+
+You can now use the Producer's `POST /producer/send` endpoint to send data and see it appear in the database via the X-Ray API's `GET /signals` endpoint.
+
+---
+
+## Manual Setup (Without Docker)
+
+This method is for development and testing individual components without running the full stack.
+
+1.  **Prerequisites**: Node.js, npm, a running MongoDB instance, a running RabbitMQ instance.
+2.  **Clone and set up** each repository individually as described in the initial setup instructions.
+3.  **Update your `.env` files** to point to your local services (e.g., `localhost` instead of the Docker service names).
+4.  **Run each application** in a separate terminal using `npm run start:dev`.
